@@ -2,7 +2,7 @@
   "name": "Asistente de Mecanizado",
   "short_name": "TallerApp",
   "description": "Calculador de Roscas Torno CYPML y RPM de perforado",
-  "start_url": "./taller.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f6f9",
   "theme_color": "#2c3e50",

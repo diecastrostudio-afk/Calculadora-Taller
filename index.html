@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistente de Taller - CYPML-93201/D & RPM</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { background-color: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; width: 100%; }
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #ddd; }
+        .tab-button { flex: 1; padding: 12px; background: none; border: none; font-size: 15px; font-weight: bold; color: #7f8c8d; cursor: pointer; text-align: center; }
+        .tab-button.active { color: #2c3e50; border-bottom: 4px solid #3498db; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        h3 { margin-top: 0; color: #2c3e50; text-align: center; font-size: 18px; }
+        label { font-weight: bold; display: block; margin: 15px 0 5px; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; box-sizing: border-box; background-color: #fafafa; }
+        .radio-group { display: flex; gap: 10px; margin-top: 5px; }
+        .radio-option { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; border: 2px solid #ccc; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; background-color: #fafafa; }
+        .radio-option.selected { border-color: #e67e22; background-color: #fdf2e9; color: #e67e22; }
+        .radio-option input { display: none; }
+        .btn-blue { background-color: #3498db; color: white; }
+        .btn-orange { background-color: #e67e22; color: white; }
+        button.calc-btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .resultado { margin-top: 20px; padding: 15px; border-radius: 8px; background-color: #eef2f7; display: none; }
+        .res-blue { border-left: 5px solid #2ecc71; }
+        .res-orange { border-left: 5px solid #e67e22; }
+        .resultado-item { margin: 10px 0; font-size: 15px; }
+        .resultado-item strong { color: #2c3e50; }
+        .color-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 5px; border: 1px solid #333; vertical-align: middle; }
+        .rpm-display { font-size: 24px; font-weight: bold; color: #e67e22; display: block; margin-top: 5px; }
+        .advertencia { font-size: 12px; color: #7f8c8d; margin-top: 15px; font-style: italic; border-top: 1px solid #ddd; padding-top: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-button active" onclick="cambiarPestaña(event, 'tabRoscas')">⚙️ Roscas Torno</button>
+        <button class="tab-button" onclick="cambiarPestaña(event, 'tabVelocidades')">⚡ Cálculo RPM</button>
+    </div>
+
+    <!-- SECCIÓN ROSCAS -->
+    <div id="tabRoscas" class="tab-content active">
+        <h3>Configuración de Caja Norton y Engranajes</h3>
+        <label for="tipoRosca">1. Tipo de Rosca / Operación</label>
+        <select id="tipoRosca" onchange="actualizarOpcionesRoscas()">
+            <option value="metrica">Métrica (t - M3 a 30mm)</option>
+            <option value="pulgadas">Pulgadas (n/1" - Grandes Diámetros)</option>
+        </select>
+
+        <label for="pasoRosca">2. Selecciona el Paso / Diámetro (TPI)</label>
+        <select id="pasoRosca"></select>
+
+        <button class="calc-btn btn-blue" onclick="calcularRoscas()">CALCULAR POSICIONES</button>
+
+        <div id="resRoscasBox" class="resultado res-blue">
+            <div class="resultado-item"><strong>⚙️ Lira (Engranajes):</strong> <span id="resLira"></span></div>
+            <div class="resultado-item"><strong>🔴 Mando de Color:</strong> <span id="resColor"></span><span id="dotColor"></span></div>
+            <div class="resultado-item"><strong>🅰️ Letra / Rango:</strong> <span id="resLetra"></span></div>
+            <div class="resultado-item"><strong>🔢 Ranura Caja Norton:</strong> <span id="resNorton"></span></div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN RPM -->
+    <div id="tabVelocidades" class="tab-content">
+        <h3>Velocidades de Perforado y Fresado</h3>
+        <label>1. Tipo de Herramienta</label>
+        <div class="radio-group">
+            <div class="radio-option selected" id="optMecha" onclick="seleccionarHerramienta('mecha')">
+                <input type="radio" name="herramienta" value="mecha" checked> 🔩 Mecha / Broca
+            </div>
+            <div class="radio-option" id="optFresa" onclick="seleccionarHerramienta('fresa')">
+                <input type="radio" name="herramienta" value="fresa"> ⚙️ Fresa (Milling)
+            </div>
+        </div>
+
+        <label for="materialPieza">2. Material de la Pieza</label>
+        <select id="materialPieza">
+            <option value="acero_suave">Acero Suave / SAE 1020</option>
+            <option value="acero_duro">Acero Aleado / SAE 4140</option>
+            <option value="inoxidable">Acero Inoxidable (304 / 316)</option>
+            <option value="fundicion">Fundición Gris / Hierro Fundido</option>
+            <option value="aluminio">Aluminio / Bronce</option>
+            <option value="plastico">Plásticos / Grilón / Acrílico</option>
+        </select>
+
+        <label for="diametroHerramienta">3. Diámetro de la Herramienta (mm)</label>
+        <input type="number" id="diametroHerramienta" placeholder="Ej: 10, 12, 20" min="0.1" step="0.1">
+
+        <button class="calc-btn btn-orange" onclick="calcularRPM()">CALCULAR VELOCIDAD</button>
+
+        <div id="resVelocidadesBox" class="resultado res-orange">
+            <div class="resultado-item"><strong>⚙️ Velocidad de Corte Sugerida (Vc):</strong> <span id="resVc"></span> m/min</div>
+            <div class="resultado-item"><strong>🔄 Velocidad de Rotación Ideal:</strong> <span id="resRpm" class="rpm-display"></span></div>
+            <div class="resultado-item" id="consejoAvance"></div>
+            <div class="advertencia">💡 Nota: Valores para herramientas de acero rápido (HSS). Con insertos de metal duro se pueden duplicar las RPM.</div>
+        </div>
+    </div>
+</div>
+
+<!-- Enlace al motor de cálculo externo -->
+<script src="script.js"></script>
+
+<!-- Vinculación de la WebApp (PWA) -->
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
+<link rel="manifest" href="manifest.json">
+
+</body>
+</html>
